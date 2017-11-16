@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Pace Calculator</title>
+  <script src="parser.js"></script>
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+        $("#source").keyup(function() {
+            try {
+                var results = parser.parse($("#source").val());
+                var text = results.distance + "km / " + results.time
+                    + " (" + results.pace + "/km, " + results.speed + "km/h)";
+                $("#result").text(text).css({'background-color': 'lightgreen'});
+            }
+            catch (intentionally_ignore) {
+                $("#result").text('<syntax error>').css({'background-color': 'red'});
+                console.log(intentionally_ignore);
+            }
+        });
+    });
+</script>  
+</head>
+<body>
+  <h1>Pace Calculator</h1>
+  <div style="background-color: lightgray;">
+  <pre><tt>
+speed and distance, e.g. '12km/h 10,5km' or '12,5km 10km/h'
+speed and time,     e.g. '10km/h 0.40.00' or '1.30.00 12,5km/h'
+pace and distance,  e.g. '4.30/km 4,5km' or '5km 5.00/km'
+pace and time,      e.g. '6.00/km 6,5km' or '7,5km 3.45/km'
+time distance,      e.g. '0.45.00 8,8km' or '7km 0.35.00'
+</tt></pre>
+</div>
+  <div><input id="source"></input></div>
+  <div id="result"></div>
+</body>
+</html>  

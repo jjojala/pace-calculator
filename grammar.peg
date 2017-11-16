@@ -1,0 +1,108 @@
+{
+	function pad(num, size) {
+    	var s = "000000000" + num;
+    	return s.substr(s.length-size);
+	}
+
+	function toString(time) {
+    	if (time < 3600)
+            return parseInt(time / 60) + '.' + pad(parseInt(time % 60), 2);
+		else
+        	return parseInt(time / 3600) + '.'
+            	+ pad(parseInt(time % 3600 / 60), 2)
+            	+ '.' + pad(parseInt(time % 3600 % 60), 2);
+    }
+    
+	function time(speed, distance) {
+    	return distance / speed * 3600;
+    }
+    
+    function pace(speed) {
+    	return 3600 / speed;
+    }
+    
+    function speed(pace) {
+    	return (1 / pace * 3600.0).toFixed(2);
+    }
+    
+    function result(speed, distance, time, pace) {
+    	return {
+        	distance: distance.toString().replace(".", ","),
+            time: toString(time),
+            pace: toString(pace),
+            speed: speed.toString().replace(".", ",")
+        };
+    }
+}
+
+Expression
+    = speed:Speed _ distance:Distance { return result(speed, distance, time(speed, distance), pace(speed)); } 
+    / speed:Speed _ time:Time {
+    	return function(speed, time) {
+        		var dist = parseFloat((speed / 3600.0 * time).toFixed(2));
+                return result(speed, dist, time, pace(speed));
+        	}(speed, time);
+	}
+    / distance:Distance _ speed:Speed {
+    	return result(speed, distance, time(speed, distance), pace(speed)); }
+    / distance:Distance _ pace:Pace {
+    	return function(pace, distance) {
+        		var sp = speed(pace);
+            	return result(sp, distance, time(sp, distance), pace);
+        	}(pace, distance);
+        }
+    / distance:Distance _ time:Time {
+    	return function(distance, time) {
+        		var sp = (distance / time * 3600).toFixed(2);
+            	return result(sp, distance, time, pace(sp));
+            }(distance, time);
+	    }
+    / pace:Pace _ distance:Distance { return function(pace, distance) {
+    		var s = speed(pace);
+    		return result(s, distance, time(s, distance), pace);
+    	}(pace, distance);
+    }
+    / pace:Pace _ time:Time {
+    	return function(pace, time) {
+        		var sp = speed(pace);
+            	var dist = parseFloat((sp / 3600.0 * time).toFixed(2));
+    			return result(sp, dist, time, pace);
+            }(pace, time);
+    }
+	/ time:Time _ speed:Speed {
+    	return result(speed, (time * speed / 3600.0).toFixed(2), time, pace(speed));
+    }
+    / time:Time _ distance:Distance {
+    	return function(distance, time) {
+        		var sp = (distance / time * 3600).toFixed(2);
+            	return result(sp, distance, time, pace(sp));
+            }(distance, time);
+	    }
+
+Pace "float"
+	= pace:Minutes _ '/km' { return pace; }
+
+Speed "float"
+	= speed:Decimal _ 'km/h' { return speed; }
+
+Distance "float"
+	= distance:Decimal _ 'km' { return distance; }
+
+Time "integer"
+	= hours:Integer '.' minutes:Sixty '.' seconds:Sixty { return hours * 3600 + minutes * 60 + seconds; } 
+
+Minutes "integer"
+	= minutes:Integer '.' seconds:Sixty { return minutes * 60 + seconds; }
+    
+Decimal "float"
+	= [0-9]+ (',' [0-9]+)? { return parseFloat(text().replace(',', '.')); }
+
+Integer "integer"
+  = _ [0-9]+ { return parseInt(text(), 10); }
+
+Sixty "integer"
+	= [0-5][0-9] { return parseInt(text(), 10); }
+
+_ "whitespace"
+  = [ \t\n\r]*
+              
